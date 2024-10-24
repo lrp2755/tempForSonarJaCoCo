@@ -2,18 +2,21 @@ package com.masai.factories;
 
 import com.masai.entities.Admin;
 import com.masai.entities.TripDetails;
+import org.springframework.stereotype.Component;
 
+@Component
 public class DefaultAdminFactory implements AdminFactory {
 
     @Override
-    public Admin createAdmin() {
-        // Return a new Admin instance
-        return new Admin();
+    public Admin createAdmin(String username, String password) {
+        Admin admin = new Admin();
+        admin.setUsername(username);
+        admin.setPassword(password);
+        return admin;
     }
 
     @Override
     public TripDetails createTripDetails() {
-        // Return a new TripDetails instance
-        return new TripDetails();
+        return new TripDetails(); // Implement this if you need it
     }
 }
