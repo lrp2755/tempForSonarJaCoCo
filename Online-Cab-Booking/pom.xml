@@ -15,8 +15,13 @@
 	<name>Online-Cab-Booking</name>
 	<description>Online cab booking app</description>
 	<properties>
-		<java.version>1.8</java.version>
-	</properties>
+    <java.version>1.8</java.version>
+    <sonar.organization>ka8540</sonar.organization>
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.projectKey>ka8540_Online-Cab-Booking-App</sonar.projectKey> 
+</properties>
+
+	
 	
 	<dependencies>
 		<dependency>
@@ -80,6 +85,11 @@
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
 			<plugin>
+				<groupId>org.sonarsource.scanner.maven</groupId>
+				<artifactId>sonar-maven-plugin</artifactId>
+            <version>3.9.1.2184</version>
+        </plugin>
+		<plugin>
             <groupId>org.jacoco</groupId>
             <artifactId>jacoco-maven-plugin</artifactId>
             <version>0.8.8</version>
@@ -92,6 +102,7 @@
                 </execution>
             </executions>
         </plugin>
+		
 		</plugins>
 	</build>
 
