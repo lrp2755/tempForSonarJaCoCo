@@ -32,6 +32,19 @@ public class Cab {
 	@JoinColumn(name = "driverId")
 	private CabDriver cabDriver;
 
+	// Default constructor
+	public Cab() {
+	}
+
+	// New parameterized constructor
+	public Cab(String carType, String numberPlate, Float ratePerKms) {
+		this.carType = carType;
+		this.numberPlate = numberPlate;
+		this.ratePerKms = ratePerKms;
+	}
+
+	// Getters and Setters
+
 	public Integer getCabId() {
 		return cabId;
 	}
@@ -77,5 +90,4 @@ public class Cab {
 		return "Cab [cabId=" + cabId + ", numberPlate=" + numberPlate + ", carType=" + carType + ", ratePerKms="
 				+ ratePerKms + "]";
 	}
-
 }

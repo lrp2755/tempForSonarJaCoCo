@@ -1,12 +1,10 @@
 package com.masai.services.cabdriver;
 
 import java.util.List;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
-
 import com.masai.entities.Cab;
 import com.masai.entities.CabDriver;
 import com.masai.entities.CabDriverCabDTO;
@@ -28,131 +26,101 @@ public class CabDriverServiceImpl implements CabDriverService {
 
 	@Override
 	public ResponseEntity<CabDriver> insertCabDriver(CabDriverCabDTO cabdto) {
-
-		System.out.println("Received DTO: " + cabdto);
-		System.out.println("Address: " + cabdto.getAddress());
-		System.out.println("Username: " + cabdto.getUsername());
-		System.out.println("Password: " + cabdto.getPassword());
-		System.out.println("Mobile: " + cabdto.getMobile());
-		System.out.println("Email: " + cabdto.getEmail());
-		System.out.println("Car Type: " + cabdto.getCarType());
-		System.out.println("Number Plate: " + cabdto.getNumberPlate());
-		System.out.println("Rate Per Km: " + cabdto.getRatePerKms());
-		System.out.println("License Number: " + cabdto.getLicenseNumber());
-
-		Cab cab = new Cab();
-		cab.setCarType(cabdto.getCarType());
-		cab.setNumberPlate(cabdto.getNumberPlate());
-		cab.setRatePerKms(cabdto.getRatePerKms());
-
-		CabDriver cabDriver = new CabDriver();
-		cabDriver.setAddress(cabdto.getAddress());
-		cabDriver.setUsername(cabdto.getUsername());
-		cabDriver.setPassword(cabdto.getPassword());
-		cabDriver.setMobile(cabdto.getMobile());
-		cabDriver.setEmail(cabdto.getEmail());
-		cabDriver.setCab(cab);
-		cabDriver.setLicenseNumber(cabdto.getLicenseNumber());
-
-		cabDriver.setCab(cab);
-		cab.setCabDriver(cabDriver);
-
-		System.out.println(cabDriver);
-
-		CabDriver cd = cabDriverDao.findByUsername(cabdto.getUsername());
-		CabDriver cd2 = cabDriverDao.findByLicenseNumber(cabdto.getLicenseNumber());
-		if (cd != null)
-			throw new UserNameAlreadyExist("Username Already Exist");
-		if (cd2 != null)
-			throw new UserNameAlreadyExist("License number already registered");
-
-		Cab cb = cabDao.findByNumberPlate(cabdto.getNumberPlate());
-		if (cb != null)
-			throw new UserNameAlreadyExist("Number Plate already registered");
+		validateUniqueCabDriverFields(cabdto);
+		CabDriver cabDriver = createCabDriver(cabdto);
 		cabDriverDao.save(cabDriver);
 		return new ResponseEntity<>(cabDriver, HttpStatus.ACCEPTED);
 	}
 
 	@Override
 	public ResponseEntity<CabDriver> updateCabDriver(CabDriverCabDTO cabdto, String user, String pass) {
-
-		// String username = cabdto.getUsername();
-		CabDriver cd = cabDriverDao.findByUsernameAndPassword(user, pass);
-
-		if (cd == null)
-			throw new UserDoesNotExist("Username or Password is wrong");
-
-		Cab cb = cd.getCab();
-		System.out.println(cb);
-		System.out.println(cabdto);
-
-		if (cabdto.getUsername() != null) {
-			CabDriver cd2 = cabDriverDao.findByUsername(cabdto.getUsername());
-			if (cd2 != null)
-				throw new UserNameAlreadyExist("username already exist");
-			cd.setUsername(cabdto.getUsername());
-		}
-		if (cabdto.getPassword() != null)
-			cd.setPassword(cabdto.getPassword());
-		if (cabdto.getMobile() != null)
-			cd.setMobile(cabdto.getMobile());
-		if (cabdto.getAddress() != null)
-			cd.setAddress(cabdto.getAddress());
-		if (cabdto.getLicenseNumber() != null) {
-			CabDriver cd2 = cabDriverDao.findByLicenseNumber(cabdto.getLicenseNumber());
-			if (cd2 != null)
-				throw new UserNameAlreadyExist("License number already exist");
-		}
-
-		if (cabdto.getEmail() != null)
-			cd.setEmail(cabdto.getEmail());
-		// if(cabdto.get)
-
-		if (cabdto.getCarType() != null)
-			cb.setCarType(cabdto.getCarType());
-		if (cabdto.getNumberPlate() != null) {
-			Cab cb2 = cabDao.findByNumberPlate(cabdto.getNumberPlate());
-			if (cb2 != null)
-				throw new UserNameAlreadyExist("Number Plate already registered");
-			cb.setNumberPlate(cabdto.getNumberPlate());
-			;
-		}
-		if (cabdto.getRatePerKms() != null)
-			cb.setRatePerKms(cabdto.getRatePerKms());
-
-		cabDriverDao.save(cd);
-
-		return new ResponseEntity<CabDriver>(cd, HttpStatus.OK);
-
+		CabDriver cabDriver = getValidatedCabDriver(user, pass);
+		updateCabDriverFields(cabDriver, cabdto);
+		cabDriverDao.save(cabDriver);
+		return new ResponseEntity<>(cabDriver, HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<String> deleteCabDriver(CabDriver cabDriver) {
-		// TODO Auto-generated method stub
-		CabDriver cd = cabDriverDao.findByUsernameAndPassword(cabDriver.getUsername(), cabDriver.getPassword());
-		if (cd == null)
-			throw new UserDoesNotExist("username or password is wrong");
+		CabDriver cd = getValidatedCabDriver(cabDriver.getUsername(), cabDriver.getPassword());
 		cabDriverDao.delete(cd);
-		return new ResponseEntity<>("driver with username : " + cabDriver.getUsername() + " deleted", HttpStatus.OK);
+		return new ResponseEntity<>("Driver with username: " + cabDriver.getUsername() + " deleted", HttpStatus.OK);
 	}
 
 	@Override
 	public ResponseEntity<String> updateStatus(CabDriver cabDriver) {
-
-		CabDriver cd = cabDriverDao.findByUsernameAndPassword(cabDriver.getUsername(), cabDriver.getPassword());
-		if (cd == null)
-			throw new UserDoesNotExist("username or password is wrong");
-		List<TripDetails> tripList = cd.getTripDetailsList();
-
-		if (tripList.size() > 0) {
-			TripDetails lasTripDetails = tripList.get(tripList.size() - 1);
-			if (lasTripDetails.getStatus() == false)
-				throw new TripInProgress("Trip is already in progress");
-
-		}
-		cd.setAvailablity(!cd.getAvailablity());
+		CabDriver cd = getValidatedCabDriver(cabDriver.getUsername(), cabDriver.getPassword());
+		ensureNoTripInProgress(cd);
+		toggleAvailability(cd);
 		cabDriverDao.save(cd);
 		return new ResponseEntity<>("Status Updated Successfully", HttpStatus.ACCEPTED);
 	}
 
+	// Factory Method with Reduced Complexity
+	private CabDriver createCabDriver(CabDriverCabDTO cabdto) {
+		Cab cab = new Cab(cabdto.getCarType(), cabdto.getNumberPlate(), cabdto.getRatePerKms());
+		CabDriver cabDriver = new CabDriver(cabdto.getUsername(), cabdto.getPassword(), cabdto.getAddress(),
+				cabdto.getMobile(),
+				cabdto.getEmail(), cabdto.getLicenseNumber(), cab);
+		cab.setCabDriver(cabDriver);
+		return cabDriver;
+	}
+
+	// Validate that fields are unique
+	private void validateUniqueCabDriverFields(CabDriverCabDTO cabdto) {
+		if (cabDriverDao.findByUsername(cabdto.getUsername()) != null)
+			throw new UserNameAlreadyExist("Username already exists");
+		if (cabDriverDao.findByLicenseNumber(cabdto.getLicenseNumber()) != null)
+			throw new UserNameAlreadyExist("License number already registered");
+		if (cabDao.findByNumberPlate(cabdto.getNumberPlate()) != null)
+			throw new UserNameAlreadyExist("Number plate already registered");
+	}
+
+	private CabDriver getValidatedCabDriver(String username, String password) {
+		CabDriver cabDriver = cabDriverDao.findByUsernameAndPassword(username, password);
+		if (cabDriver == null)
+			throw new UserDoesNotExist("Username or password is wrong");
+		return cabDriver;
+	}
+
+	private void ensureNoTripInProgress(CabDriver cabDriver) {
+		List<TripDetails> tripList = cabDriver.getTripDetailsList();
+		if (!tripList.isEmpty() && !tripList.get(tripList.size() - 1).getStatus()) {
+			throw new TripInProgress("Trip is already in progress");
+		}
+	}
+
+	private void toggleAvailability(CabDriver cabDriver) {
+		cabDriver.setAvailablity(!cabDriver.getAvailablity());
+	}
+
+	// Helper method to update CabDriver fields
+	private void updateCabDriverFields(CabDriver cabDriver, CabDriverCabDTO cabdto) {
+		if (cabdto.getUsername() != null && !cabdto.getUsername().equals(cabDriver.getUsername())) {
+			if (cabDriverDao.findByUsername(cabdto.getUsername()) != null)
+				throw new UserNameAlreadyExist("Username already exists");
+			cabDriver.setUsername(cabdto.getUsername());
+		}
+		cabDriver.setPassword(cabdto.getPassword() != null ? cabdto.getPassword() : cabDriver.getPassword());
+		cabDriver.setMobile(cabdto.getMobile() != null ? cabdto.getMobile() : cabDriver.getMobile());
+		cabDriver.setAddress(cabdto.getAddress() != null ? cabdto.getAddress() : cabDriver.getAddress());
+		if (cabdto.getLicenseNumber() != null && !cabdto.getLicenseNumber().equals(cabDriver.getLicenseNumber())) {
+			if (cabDriverDao.findByLicenseNumber(cabdto.getLicenseNumber()) != null)
+				throw new UserNameAlreadyExist("License number already exists");
+			cabDriver.setLicenseNumber(cabdto.getLicenseNumber());
+		}
+		cabDriver.setEmail(cabdto.getEmail() != null ? cabdto.getEmail() : cabDriver.getEmail());
+
+		updateCabDetails(cabDriver.getCab(), cabdto);
+	}
+
+	private void updateCabDetails(Cab cab, CabDriverCabDTO cabdto) {
+		cab.setCarType(cabdto.getCarType() != null ? cabdto.getCarType() : cab.getCarType());
+		if (cabdto.getNumberPlate() != null && !cabdto.getNumberPlate().equals(cab.getNumberPlate())) {
+			if (cabDao.findByNumberPlate(cabdto.getNumberPlate()) != null)
+				throw new UserNameAlreadyExist("Number plate already registered");
+			cab.setNumberPlate(cabdto.getNumberPlate());
+		}
+		cab.setRatePerKms(cabdto.getRatePerKms() != null ? cabdto.getRatePerKms() : cab.getRatePerKms());
+	}
 }
