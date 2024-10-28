@@ -126,7 +126,4 @@ public class CabDriverServiceImpl implements CabDriverService {
 		cabDriverDao.save(cd);
 		return new ResponseEntity<>("Status Updated Successfully",HttpStatus.ACCEPTED);
 	}
-	
-	
-	
 }
